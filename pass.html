@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Android Security Calculator</title>
+    <style>
+        /* Overall Page Design */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #eef2f3, #8e9eab);
+            margin: 0;
+            padding: 0;
+        }
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        /* Header Styling */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+            header h1 {
+                margin: 10px 0;
+                color: #333;
+            }
+
+            header p {
+                color: #666;
+                font-size: 18px;
+            }
+        /* Section Headings */
+        section h2 {
+            color: #444;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+        /* Forms and Inputs */
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+            button:hover {
+                background-color: #45a049;
+            }
+        /* Result Card */
+        .result {
+            margin-top: 15px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+        }
+        /* Permanent Custom Text Area */
+        .customTextDisplay {
+            margin-top: 50;
+            padding: 100px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Android Security Calculatorr</h1>
+            <p>A tool to compute the security measure of your Android graphic passwords.</p>
+        </header>
+
+        <!-- Pattern Calculator Section -->
+        <section id="calculatorSection">
+            <h2>Calculate R Value</h2>
+            <form id="patternForm">
+                <label for="pattern">Enter Pattern (e.g., 1236 or 1,2,3,6):</label>
+                <input type="text" id="pattern" name="pattern" placeholder="e.g., 1236 or 1,2,3,6" required>
+                <button type="submit">Compute R</button>
+            </form>
+            <div id="result" class="result"></div>
+        </section>
+
+        <!-- Summery -->
+        <section id="Summery">
+            <h2>Summery</h2>
+            <!-- Change the text below to your permanent message -->
+            <div id="Summery" class="customTextDisplay">
+                <h1>Graphic Password Security</h1>
+                <p>Nowadays, a lot of people use graphic passwords without considering the security aspect, but that isn't right.</p>
+
+                <p>In this calculator, you can test the security level of your graphic password, which includes some common human patterns.</p>
+
+                <p>If your score is less than 15, it means you should think about how to improve the security of your password.</p>
+
+                <h2>Common Human Patterns</h2>
+                <ul>
+                    <li>A lot of people start their passwords with the number 1.</li>
+                    <li>Many users tend to use 4 or 5 dots.</li>
+                    <li>Passwords that resemble letters are quite popular.</li>
+                </ul>
+
+                <h2>Password Security Formula</h2>
+                <p>Regarding letters, you can see:</p>
+                <p><strong>r = S * log₂(L + I + O)</strong></p>
+                <ul>
+                    <li><strong>S</strong> = the number of dots used in the password</li>
+                    <li><strong>L</strong> = the length of the password</li>
+                    <li><strong>I</strong> = intersections</li>
+                    <li><strong>O</strong> = overlaps</li>
+                    <li><strong>p and k</strong> = special parameters</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script>document.addEventListener("DOMContentLoaded", function() {
+      // Coordinates for a 3x3 grid (dot numbers 1-9)
+      var dotCoordinates = {
+        1: { x: 0, y: 0 },
+        2: { x: 1, y: 0 },
+        3: { x: 2, y: 0 },
+        4: { x: 0, y: 1 },
+        5: { x: 1, y: 1 },
+        6: { x: 2, y: 1 },
+        7: { x: 0, y: 2 },
+        8: { x: 1, y: 2 },
+        9: { x: 2, y: 2 }
+      };
+
+      // Validate the pattern following Android rules:
+      // 1. No repeated dots.
+      // 2. If an intermediate dot exists between two consecutive dots,
+      //    it must have been selected earlier.
+      function getIntermediate(a, b) {
+        var p1 = dotCoordinates[a];
+        var p2 = dotCoordinates[b];
+        var midX = (p1.x + p2.x) / 2;
+        var midY = (p1.y + p2.y) / 2;
+        if (midX % 1 === 0 && midY % 1 === 0) {
+          for (var key in dotCoordinates) {
+            if (dotCoordinates.hasOwnProperty(key)) {
+              var pt = dotCoordinates[key];
+              if (pt.x === midX && pt.y === midY) {
+                return parseInt(key, 10);
+              }
+            }
+          }
+        }
+        return null;
+      }
+
+      function isValidPattern(pattern) {
+        // Check for repeated dots.
+        for (var i = 0; i < pattern.length; i++) {
+          for (var j = i + 1; j < pattern.length; j++) {
+            if (pattern[i] === pattern[j]) {
+              return false;
+            }
+          }
+        }
+        // Check intermediate dot rule.
+        for (var i = 1; i < pattern.length; i++) {
+          var inter = getIntermediate(pattern[i - 1], pattern[i]);
+          if (inter !== null) {
+            var found = false;
+            for (var j = 0; j < i; j++) {
+              if (pattern[j] === inter) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) return false;
+          }
+        }
+        return true;
+      }
+
+      // Compute total Euclidean distance of the pattern.
+      function computeTotalLength(pattern) {
+        var total = 0;
+        for (var i = 1; i < pattern.length; i++) {
+          var p1 = dotCoordinates[pattern[i - 1]];
+          var p2 = dotCoordinates[pattern[i]];
+          var dx = p2.x - p1.x;
+          var dy = p2.y - p1.y;
+          total += Math.sqrt(dx * dx + dy * dy);
+        }
+        return total;
+      }
+
+      // Count intersections between non-adjacent segments.
+      function direction(xi, yi, xj, yj, xk, yk) {
+        return (xk - xi) * (yj - yi) - (xj - xi) * (yk - yi);
+      }
+
+      function doLinesIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+        var d1 = direction(x3, y3, x4, y4, x1, y1);
+        var d2 = direction(x3, y3, x4, y4, x2, y2);
+        var d3 = direction(x1, y1, x2, y2, x3, y3);
+        var d4 = direction(x1, y1, x2, y2, x4, y4);
+        return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+               ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+      }
+
+      function countIntersections(pattern) {
+        var intersections = 0;
+        for (var i = 1; i < pattern.length; i++) {
+          var a = pattern[i - 1], b = pattern[i];
+          var p1 = dotCoordinates[a];
+          var p2 = dotCoordinates[b];
+          for (var j = 1; j < i - 1; j++) {
+            var c = pattern[j - 1], d = pattern[j];
+            var p3 = dotCoordinates[c];
+            var p4 = dotCoordinates[d];
+            if (doLinesIntersect(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y)) {
+              intersections++;
+            }
+          }
+        }
+        return intersections;
+      }
+
+      // Count overlapping (repeated) segments (regardless of direction).
+      function countOverlaps(pattern) {
+        var overlaps = 0;
+        var segments = [];
+        for (var i = 1; i < pattern.length; i++) {
+          var a = pattern[i - 1],
+              b = pattern[i];
+          var seg = a < b ? (a + "-" + b) : (b + "-" + a);
+          if (segments.indexOf(seg) !== -1) {
+            overlaps++;
+          } else {
+            segments.push(seg);
+          }
+        }
+        return overlaps;
+      }
+
+      // Compute the original r value, using the method:
+      // r = S * log₂(L + I + O)
+      function computeR(pattern) {
+        var S = pattern.length;
+        var L = computeTotalLength(pattern);
+        var I = countIntersections(pattern);
+        var O = countOverlaps(pattern);
+        var sum = L + I + O;
+        if (sum <= 0) {
+          throw new Error("Invalid pattern: log₂ of non-positive value.");
+        }
+        var log2Value = Math.log(sum) / Math.log(2);
+        return S * log2Value;
+      }
+
+      // When the form is submitted, parse and validate the pattern,
+      // then compute r and finally apply the new formula:
+      // R = r × p – k, where:
+      //    p = 1 – (l/81), with l chosen based on the full pattern,
+      //    and k = 1 if first dot is 1, k = –1 if first dot is 5, otherwise 0.
+      document.getElementById("patternForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        var input = document.getElementById("pattern").value.trim();
+        var pattern = [];
+        try {
+          // Split input by commas if present; otherwise, treat each character separately.
+          if (input.indexOf(",") !== -1) {
+            pattern = input.split(",").map(function(s) { return parseInt(s.trim(), 10); });
+          } else {
+            pattern = input.split("").map(function(ch) { return parseInt(ch, 10); });
+          }
+          // Validate that there are at least two digits and they are in the range 1-9.
+          if (pattern.length < 2 || !pattern.every(function(n) { return n >= 1 && n <= 9; })) {
+            throw new Error("Please provide a valid pattern with at least two digits (each from 1 to 9).");
+          }
+          // Check the pattern according to Android rules.
+          if (!isValidPattern(pattern)) {
+            throw new Error("Invalid pattern: This pattern does not follow Android lock rules.");
+          }
+
+          // Compute the original r value.
+          var r = computeR(pattern);
+
+          // Determine l based on the entire pattern as a string.
+          var patternStr = pattern.join("");
+          var l = 0;
+          if (patternStr === "32489") {
+            l = 4;
+          } else if (patternStr === "2589") {
+            l = 6;
+          } else if (patternStr === "7415963") {
+            l = 3;
+          } else if (patternStr === "1235789") {
+            l = 8;
+          }
+          // Compute p = 1 - (l / 81)
+          var p = 1 - (l / 81);
+
+          // Determine k based on the first dot.
+          var k = 0;
+          if (pattern[0] === 1) {
+            k = 1;
+          } else if (pattern[0] === 5) {
+            k = -1;
+          }
+
+          // Compute the final R value using the modified formula.
+          var newR = r * p - k;
+
+          document.getElementById("result").innerHTML =
+            "<h3>Calculated R Value: " + newR.toFixed(3) + "</h3>" +
+            "<p><strong>Original r:</strong> " + r.toFixed(3) + "<br>" +
+            "<strong>p (1 - l/81):</strong> " + p.toFixed(3) + " (with l = " + l + ")<br>" +
+            "<strong>k:</strong> " + k + "<br>" +
+            "<strong>S (dots used):</strong> " + pattern.length + "</p>";
+        } catch (error) {
+          document.getElementById("result").innerHTML =
+            '<p style="color: red;">Error: ' + error.message + "</p>";
+          console.error(error);
+        }
+      });
+    });</script>
+</body>
+</html>
